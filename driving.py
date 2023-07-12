@@ -32,6 +32,10 @@ def place_mcdonalds_order(order):
     return json.dumps(order_info)
 
 
+def end_order():
+    print("END ORDER")
+
+
 def append_chat_message(messages, role, user_input, function_name=None):
     if function_name:
         messages.append(
@@ -53,11 +57,20 @@ def run_conversation(messages):
                     "properties": {
                         "order": {
                             "type": "string",
-                            "description": "The json format of the McDonald's order",
+                            "description": "The json format of the McDonald's order. It should include the items and customizations.",
                         },
                     },
                 "required": ["order"],
             },
+        },
+        {
+            "name": "end_order",
+            "description": "Call this function after you confirm the customer's order. This will end the conversation.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+            },
+            "required": [],
         },
     ]
     response = openai.ChatCompletion.create(
@@ -75,9 +88,15 @@ def run_conversation(messages):
         # Note: the JSON response may not always be valid; be sure to handle errors
         available_functions = {
             "place_mcdonalds_order": place_mcdonalds_order,
+            "end_order": end_order,
         }
         function_name = response_message["function_call"]["name"]
         function_to_call = available_functions[function_name]
+        print("FUNCTION CALLED: " + function_name)
+        if function_name == "end_order":
+            print("Thanks for your money")
+            return messages, False  # replace messages
+
         function_args = json.loads(
             response_message["function_call"]["arguments"]
         )
@@ -97,13 +116,11 @@ def run_conversation(messages):
         )
         messages.append(second_response["choices"][0]["message"])
         print(second_response["choices"][0]["message"].content)
-        continue_conversation = False
     else:
         append_chat_message(messages, "assistant",
                             response_message.content)
         print(response_message.content)
-        continue_conversation = True
-    return messages, continue_conversation
+    return messages, True
 
 
 transcript = transcribe_audio("audio/order.mp3")
@@ -125,4 +142,3 @@ while continue_conversation:
     if continue_conversation == 'n':
         continue_conversation = False
     '''
-    append_chat_message(messages, "user", continue_conversation)
