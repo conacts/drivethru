@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Order Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .order-list {
+      list-style-type: none;
+      padding: 0;
+    }
+    .order-item {
+      border: 1px solid #ddd;
+      margin: 0.5em 0;
+      padding: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Order Tracker</h1>
+  <ul id="orderList" class="order-list"></ul>
+
+  <!-- Include the Socket.IO client library -->
+  <script src="https://cdn.socket.io/socket.io-1.0.0.js"></script>
+
+
+  <script>
+    // Connect to the Socket.IO server
+    const socket = io.connect('http://localhost:3000');
+
+    const orderList = document.getElementById('orderList');
+
+    // Function to add a new order to the list
+    function addOrder(order) {
+      order.forEach((item) => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('order-item');
+        listItem.innerHTML = `Item Name: ${item.name}, Quantity: ${item.quantity}, Customizations: ${item.customizations}`;
+        orderList.appendChild(listItem);
+      });
+    }
+
+    // Listen for the 'newOrder' event and add the new order to the list
+    socket.on('newOrder', (order) => {
+      console.log('Received new order:', order);
+      addOrder(order);
+    });
+
+    // Listen for the 'initialOrders' event and add all existing orders to the list
+    socket.on('initialOrders', (orders) => {
+      console.log('Received initial orders:', orders);
+      orders.forEach((order) => {
+        addOrder(order);
+      });
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>McDonald's Orders</title>
+</head>
+<body>
+    <h1>McDonald's Restaurant Orders</h1>
+    <button onclick="addOrder()">Add New Order</button>
+
+    <div id="ordersContainer"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('initialOrders', (orders) => {
+            orders.forEach(order => {
+                renderOrder(order);
+            });
+        });
+
+        socket.on('newOrder', (order) => {
+            renderOrder(order);
+        });
+
+        function addOrder() {
+            // Replace this sample JSON with the actual JSON order you want to send to the server
+            const sampleJsonOrder = {
+                "order": {
+                    "customer vehicle": "Toyota Camry",
+                    "items": [
+                        {
+                            "Item Name": "Big Mac",
+                            "Quantity": 1,
+                            "customizations": [
+                                "No Pickles"
+                            ]
+                        },
+                        {
+                            "Item Name": "Fries",
+                            "Quantity": 1,
+                            "size": "Large",
+                            "customizations": [
+                                "Lots of salt"
+                            ]
+                        }
+                    ]
+                }
+            };
+
+            // Send the JSON order to the server via Socket.IO
+            socket.emit('addOrder', sampleJsonOrder);
+
+            // Note: We are no longer using the HTTP POST request here
+            // The server will handle the 'addOrder' event and update other clients
+        }
+
+        function renderOrder(order) {
+            const ordersContainer = document.getElementById('ordersContainer');
+            const orderList = document.createElement('ol');
+            const title = document.createElement('strong');
+            title.textContent = 'Customer Vehicle: ' + order.order['customer vehicle'];
+            orderList.appendChild(title);
+
+            order.order.items.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.textContent = item['Item Name'] + ' - Quantity: ' + item['Quantity'];
+
+                if (item.customizations && item.customizations.length > 0) {
+                    const customizationsList = document.createElement('ul');
+                    item.customizations.forEach(customization => {
+                        const customizationItem = document.createElement('li');
+                        customizationItem.textContent = customization;
+                        customizationsList.appendChild(customizationItem);
+                    });
+                    listItem.appendChild(customizationsList);
+                }
+
+                orderList.appendChild(listItem);
+            });
+
+            ordersContainer.appendChild(orderList);
+        }
+    </script>
+</body>
+</html>
