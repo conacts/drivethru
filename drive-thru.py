@@ -7,6 +7,7 @@ import contextlib
 import datetime
 import google.cloud.texttospeech as tts
 import json
+import requests
 import sounddevice as sd
 import wavio as wv
 
@@ -36,21 +37,18 @@ def transcribe_audio(audio_file):
 def place_mcdonalds_order(order, json_file=None):
     """Place an order at McDonald's and return the order details"""
     j = json.dumps(order, indent=2)
-    print(j)
     # speak out loud 'I am placing your order right now'
     if speak:
         filename = text_to_wav(
-            "en-US-Wavenet-F", "I am placing your order right now")
+            "en-US-Neural2-H", "I am placing your order right now")
         audio_time = get_audio_length(filename)
         play_wav_file(filename)
         time.sleep(audio_time)
     else:
-        print("I am placing your order right now")
+        print("Assistant: I am placing your order right now")
     place_order(j)
     return j
 
-import requests
-import json
 
 def place_order(json_file, order=None):
     url = 'http://localhost:3000/add-order'
@@ -117,7 +115,7 @@ def text_to_wav(voice_name: str, text: str):
     filename = f"audio/{voice_name}+{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
     with open(filename, "wb") as out:
         out.write(response.audio_content)
-        print(f'LOG: Generated speech saved to "{filename}"\n')
+        # print(f'LOG: Generated speech saved to "{filename}"\n')
     return filename
 
 
@@ -215,7 +213,7 @@ def run_conversation(messages):
         messages.append(response_message)
         append_chat_message(messages, "function",
                             function_response, function_name)
-        print("FUNCTION CALLED: SUCCESS")
+        print("Function called:", function_name)
         second_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-0613",
             messages=messages,
@@ -233,28 +231,26 @@ def run_conversation(messages):
 transcript = transcribe_audio("audio/order.mp3")
 messages = [
     {"role":
-     "system", "content": "You are a helpful, drive through McDonald's assistant. Your goal is to take a customer's food order from items only on the McDonald's menu. Your goal is to have a short conversation with the customer and after you take their order, you will call the function to 'place_mcdonalds_order' where you will finalize the user's purchase. You must only talk about ordering food, item menu prices and nutritional information. Do not output nutrition information unless the customer explicitly asks about it. The camera also notes that they are driving a 2010 toyota camry, which must be noted on the order."
+     "system", "content": "You are a helpful, drive through McDonald's assistant. Your goal is to take a customer's food order from items only on the McDonald's menu. Your goal is to have a short conversation with the customer and after you take their order, you will call the function to 'place_mcdonalds_order' where you will finalize the user's purchase. You must only talk about ordering food, item menu prices and nutritional information. Do not output nutrition information unless the customer explicitly asks about it. Do not talk about the price of the order either."
      },
-    # {"role": "user", "content": transcript}
 ]
 
-continue_conversation = True
-while continue_conversation:
+if __name__ == "__main__":
+    continue_conversation = True
     if speak:
-        audio = transcribe_audio(record_audio())
-        print("You:", audio)
+        speak_text("Hello, how may I help you?")
     else:
-        audio = input("You: ")
-    append_chat_message(messages, "user", audio)
-    response_message, messages, continue_conversation = run_conversation(
-        messages)
-    print("Assistant:", response_message.content)
-    if speak:
-        speak_text(response_message.content)
+        print("Hello, how may I help you?")
+    while continue_conversation:
+        if speak:
+            audio = transcribe_audio(record_audio())
+            print("You:", audio)
+        else:
+            audio = input("You: ")
+        append_chat_message(messages, "user", audio)
+        response_message, messages, continue_conversation = run_conversation(
+            messages)
+        print("Assistant:", response_message.content)
+        if speak:
+            speak_text(response_message.content)
 
-    '''
-    continue_conversation = input(
-        "Continue conversation? (y/n): ").lower()
-    if continue_conversation == 'n':
-        continue_conversation = False
-    '''

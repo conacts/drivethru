@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order UI</title>
+</head>
+<body>
+    <h1>Orders</h1>
+    {% for order in orders %}
+        <h2>Order {{ loop.index }}:</h2>
+        <ul>
+        {% for item in order['items'] %}
+            <li>
+                {{ item['Item Name'] }} (Quantity: {{ item['Quantity'] }})
+                {% if item.get('size') %} (Size: {{ item['size'] }}) {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% endfor %}
+</body>
+</html>
