@@ -13,7 +13,7 @@ import wavio as wv
 
 freq = 44100
 duration = 5
-speak = False
+speak = True
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -202,7 +202,7 @@ def run_conversation(messages):
         print("Function called: " + function_name)
         function_args = json.loads(
             response_message["function_call"]["arguments"]
-        )
+        ) 
         function_response = function_to_call(
             order=function_args.get("order"),
             json_file=function_args.get("json_file"),
